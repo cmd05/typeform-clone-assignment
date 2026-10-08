@@ -293,6 +293,19 @@ const elementGroups = [
   }
 ] as const;
 
+const supportedElementLabels = new Set([
+  "Welcome Screen",
+  "Email",
+  "Phone Number",
+  "Multiple Choice",
+  "Dropdown",
+  "Yes/No",
+  "Rating",
+  "Long Text",
+  "Short Text",
+  "Number"
+]);
+
 const themes = [
   ["Inky Black", "#2a202b", "#fff", "#fff"],
   ["Classic Blue", "#fff", "#0f172a", "#0f4ea8"],
@@ -512,7 +525,7 @@ function defaultQuestionForType(
   };
 }
 
-function elementLabelToQuestionType(label: string): QuestionType {
+function elementLabelToQuestionType(label: string): QuestionType | null {
   const normalized = label.toLowerCase();
   if (normalized.includes("email")) return "email";
   if (normalized.includes("phone")) return "phone";
@@ -524,7 +537,8 @@ function elementLabelToQuestionType(label: string): QuestionType {
   if (normalized.includes("rating")) return "rating";
   if (normalized.includes("statement")) return "statement";
   if (normalized.includes("welcome")) return "welcome";
-  return "multiple_choice";
+  if (normalized.includes("multiple choice")) return "multiple_choice";
+  return null;
 }
 
 function EditableText({
@@ -1008,7 +1022,11 @@ export function BuilderPage({ formId }: { formId?: string }) {
             }
             setContentOpen(false);
           }}
-          onAddElement={(label) => addQuestion(elementLabelToQuestionType(label))}
+          onAddElement={(label) => {
+            const type = elementLabelToQuestionType(label);
+            if (!type) return;
+            addQuestion(type);
+          }}
         />
       ) : null}
       {creatingForm ? (
@@ -3091,17 +3109,21 @@ function ElementsTab({
         </div>
         <p className="mb-3 font-bold text-app-muted">Recommended</p>
         <button
-          className="mb-4 flex h-10 w-full items-center gap-3 rounded-lg border border-app-border px-3 text-app-muted"
+          className="mb-4 flex h-10 w-full items-center gap-3 rounded-lg border border-[#ded6e9] bg-white px-3 text-app-text transition hover:border-[#8f5bd2] hover:bg-[#fbf8ff]"
           onClick={() => onAddElement("Welcome Screen")}
         >
           <PanelRight size={17} />
           Welcome Screen
+          <span className="ml-auto rounded-full bg-[#f0e8ff] px-2 py-0.5 text-[10px] font-semibold text-[#5f2ea6]">
+            Supported
+          </span>
         </button>
         <p className="mb-3 font-bold text-app-muted">Connect to apps</p>
         {["Hubspot", "Salesforce", "Browse all apps"].map((app) => (
           <button
             key={app}
-            className="mb-1 flex h-10 w-full items-center gap-3 rounded-lg border border-app-border px-3 text-app-muted"
+            disabled
+            className="mb-1 flex h-10 w-full cursor-not-allowed items-center gap-3 rounded-lg border border-app-border bg-[#f8f8f9] px-3 text-[#aaa4ae]"
           >
             <Plus size={17} />
             {app}
@@ -3113,23 +3135,40 @@ function ElementsTab({
           <div key={group.title}>
             <h3 className="mb-4 font-bold text-app-text">{group.title}</h3>
             <div className="space-y-4">
-              {group.items.map(([label, Icon, color]) => (
-                <button
-                  key={label}
-                  onClick={() => onAddElement(label)}
-                  className="flex items-center gap-3 text-left text-[15px] text-app-muted hover:text-app-text"
-                >
-                  <span
+              {group.items.map(([label, Icon, color]) => {
+                const supported = supportedElementLabels.has(label);
+
+                return (
+                  <button
+                    key={label}
+                    disabled={!supported}
+                    onClick={() => {
+                      if (supported) onAddElement(label);
+                    }}
                     className={[
-                      "flex h-7 w-7 items-center justify-center rounded-md text-app-text",
-                      color
+                      "group flex w-full items-center gap-3 rounded-lg px-1.5 py-1 text-left text-[15px] transition",
+                      supported
+                        ? "text-app-muted hover:bg-[#fbf8ff] hover:text-app-text"
+                        : "cursor-not-allowed text-[#bbb6bf] opacity-60"
                     ].join(" ")}
                   >
-                    <Icon size={16} />
-                  </span>
-                  {label}
-                </button>
-              ))}
+                    <span
+                      className={[
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-md",
+                        supported ? `${color} text-app-text` : "bg-[#eeeeef] text-[#a9a3ad]"
+                      ].join(" ")}
+                    >
+                      <Icon size={16} />
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">{label}</span>
+                    {supported ? (
+                      <span className="rounded-full bg-[#f0e8ff] px-2 py-0.5 text-[10px] font-semibold text-[#5f2ea6]">
+                        Supported
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
             </div>
           </div>
         ))}
