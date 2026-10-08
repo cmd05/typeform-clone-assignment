@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+.venv/
+typeform_clone.db
+.env
+
+.vercel
