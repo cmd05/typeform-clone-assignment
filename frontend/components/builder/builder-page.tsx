@@ -1117,8 +1117,20 @@ function BuilderHeader({
             <span className="absolute left-0 right-0 top-0 h-1 rounded-b-full bg-app-primary" />
           ) : null}
         </button>
-        <button className="text-app-muted">Workflow</button>
-        <button className="text-app-muted">Connect</button>
+        <button
+          disabled
+          className="cursor-not-allowed text-[#c8c2cb]"
+          aria-disabled="true"
+        >
+          Workflow
+        </button>
+        <button
+          disabled
+          className="cursor-not-allowed text-[#c8c2cb]"
+          aria-disabled="true"
+        >
+          Connect
+        </button>
         {formStatus === "published" ? (
           <button
             onClick={() => onSectionChange("results")}
