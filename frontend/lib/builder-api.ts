@@ -112,7 +112,7 @@ export async function saveBuilderForm({
     })
   });
   if (!response.ok) {
-    throw new Error("Unable to save form");
+    throw new Error(await apiErrorMessage(response, "Unable to save form"));
   }
 }
 
@@ -230,4 +230,15 @@ function asString(value: unknown) {
 
 function asNumber(value: unknown) {
   return typeof value === "number" ? value : undefined;
+}
+
+async function apiErrorMessage(response: Response, fallback: string) {
+  try {
+    const body = (await response.json()) as { detail?: unknown };
+    if (typeof body.detail === "string") return body.detail;
+    if (Array.isArray(body.detail)) return body.detail.join(" ");
+  } catch {
+    // Use the stable fallback when the server returns an empty or non-JSON error body.
+  }
+  return fallback;
 }

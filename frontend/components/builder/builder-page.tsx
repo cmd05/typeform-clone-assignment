@@ -853,7 +853,7 @@ export function BuilderPage({ formId }: { formId?: string }) {
       setSelectedId(question.id);
 
       try {
-        const created = await createBuilderForm(formTitle);
+        const created = await createBuilderForm(formTitle, true);
         await saveBuilderForm({
           formId: created.id,
           questions: [question],
