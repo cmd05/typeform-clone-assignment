@@ -80,27 +80,29 @@ def test_form_crud_publish_unpublish_duplicate_and_delete(db_session: Session) -
     assert missing_form.value.status_code == 404
 
 
-def test_builder_rejects_invalid_choice_question(db_session: Session) -> None:
+def test_builder_saves_incomplete_choice_question_but_publish_rejects_it(db_session: Session) -> None:
     form = create_form(FormCreate(title="Bad Choices", start_empty=True), db_session)
 
-    with pytest.raises(HTTPException) as error:
-        save_builder(
-            form.id,
-            BuilderSave(
-                questions=[
-                    BuilderQuestionWrite(
-                        type="dropdown",
-                        title="Pick one",
-                        position=1,
-                        required=True,
-                        options=[],
-                    )
-                ],
-                endings=[],
-            ),
-            db_session,
-        )
+    saved = save_builder(
+        form.id,
+        BuilderSave(
+            questions=[
+                BuilderQuestionWrite(
+                    type="dropdown",
+                    title="Pick one",
+                    position=1,
+                    required=True,
+                    options=[],
+                )
+            ],
+            endings=[],
+        ),
+        db_session,
+    )
+    assert saved.questions[0].title == "Pick one"
 
+    with pytest.raises(HTTPException) as error:
+        publish_form(form.id, db_session)
     assert error.value.status_code == 422
 
 

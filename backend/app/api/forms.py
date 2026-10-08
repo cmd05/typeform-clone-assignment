@@ -426,7 +426,7 @@ def create_question_tree(
     position: int,
     parent_id: int | None,
 ) -> Question:
-    validate_question_payload(payload)
+    validate_question_type(payload)
     question = Question(
         form_id=form_id,
         parent_id=parent_id,
@@ -490,15 +490,9 @@ def validate_form_definition(form: Form) -> None:
         raise HTTPException(status_code=422, detail=errors)
 
 
-def validate_question_payload(payload: BuilderQuestionWrite) -> None:
+def validate_question_type(payload: BuilderQuestionWrite) -> None:
     if payload.type not in SUPPORTED_BUILDER_TYPES:
         raise HTTPException(status_code=422, detail=f"{payload.type} is not a supported question type")
-    if payload.type in CHOICE_TYPES and not [option.strip() for option in payload.options if option.strip()]:
-        raise HTTPException(status_code=422, detail=f"{payload.title or 'Choice question'} needs at least one option")
-    if payload.type == "rating":
-        rating_count = (payload.config or {}).get("ratingCount") or 5
-        if not isinstance(rating_count, int) or rating_count < 1 or rating_count > 10:
-            raise HTTPException(status_code=422, detail="Rating questions need a rating count between 1 and 10")
 
 
 def create_ending(
