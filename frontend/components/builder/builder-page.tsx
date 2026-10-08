@@ -704,7 +704,8 @@ export function BuilderPage({ formId }: { formId?: string }) {
     setSaveStatus("saving");
     titleSaveTimer.current = window.setTimeout(() => {
       updateBuilderFormTitle(formId, formTitle)
-        .then(() => {
+        .then((updated) => {
+          setFormSlug(updated.slug);
           setSaveStatus("saved");
           if (activeSection === "results") {
             setResultsRefreshKey((key) => key + 1);
@@ -913,7 +914,8 @@ export function BuilderPage({ formId }: { formId?: string }) {
         questions: formQuestions,
         endings: formEndings
       });
-      await updateBuilderFormTitle(formId, formTitle);
+      const renamed = await updateBuilderFormTitle(formId, formTitle);
+      setFormSlug(renamed.slug);
       const published = await publishBuilderForm(formId);
       setFormSlug(published.slug);
       setFormStatus("published");
@@ -947,6 +949,7 @@ export function BuilderPage({ formId }: { formId?: string }) {
   return (
     <main className="h-screen overflow-hidden bg-white text-app-text">
       <BuilderHeader
+        formId={formId}
         formTitle={formTitle}
         formSlug={formSlug}
         formStatus={formStatus}
@@ -1051,7 +1054,7 @@ export function BuilderPage({ formId }: { formId?: string }) {
       <ShareModal
         open={shareModalOpen}
         title={formTitle}
-        url={`/to/${formSlug}`}
+        url={formId ? `/to/${formId}/${formSlug}` : ""}
         onClose={() => setShareModalOpen(false)}
         onCopied={() => showToast("Link copied")}
       />
@@ -1061,6 +1064,7 @@ export function BuilderPage({ formId }: { formId?: string }) {
 }
 
 function BuilderHeader({
+  formId,
   formTitle,
   formSlug,
   formStatus,
@@ -1071,6 +1075,7 @@ function BuilderHeader({
   onPublish,
   onCopied
 }: {
+  formId?: string;
   formTitle: string;
   formSlug: string;
   formStatus: "draft" | "published";
@@ -1081,9 +1086,10 @@ function BuilderHeader({
   onPublish: () => void;
   onCopied: () => void;
 }) {
-  const publicPath = `/to/${formSlug}`;
+  const publicPath = formId ? `/to/${formId}/${formSlug}` : "";
 
   async function copyPublicLink() {
+    if (!publicPath) return;
     const url = `${window.location.origin}${publicPath}`;
     await navigator.clipboard.writeText(url);
     onCopied();

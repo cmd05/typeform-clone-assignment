@@ -26,9 +26,13 @@ SUPPORTED_QUESTION_TYPES = {
 }
 
 
-@router.get("/{slug}", response_model=PublicFormRead)
-def get_public_form(slug: str, db: Session = Depends(get_db)) -> PublicFormRead:
-    form = get_published_form(slug, db)
+@router.get("/{form_id}/{slug}", response_model=PublicFormRead)
+def get_public_form(
+    form_id: int,
+    slug: str,
+    db: Session = Depends(get_db),
+) -> PublicFormRead:
+    form = get_published_form(form_id, slug, db)
 
     return PublicFormRead(
         title=form.title,
@@ -38,13 +42,14 @@ def get_public_form(slug: str, db: Session = Depends(get_db)) -> PublicFormRead:
     )
 
 
-@router.post("/{slug}/responses", response_model=PublicSubmissionRead, status_code=201)
+@router.post("/{form_id}/{slug}/responses", response_model=PublicSubmissionRead, status_code=201)
 def submit_public_form(
+    form_id: int,
     slug: str,
     payload: PublicSubmissionCreate,
     db: Session = Depends(get_db),
 ) -> PublicSubmissionRead:
-    form = get_published_form(slug, db)
+    form = get_published_form(form_id, slug, db)
     questions = flatten_questions(
         [question for question in form.questions if question.parent_id is None]
     )
@@ -97,10 +102,10 @@ def submit_public_form(
     return PublicSubmissionRead(id=response.id, submitted_at=response.submitted_at)
 
 
-def get_published_form(slug: str, db: Session) -> Form:
+def get_published_form(form_id: int, slug: str, db: Session) -> Form:
     form = db.scalar(
         select(Form)
-        .where(Form.slug == slug)
+        .where(Form.id == form_id, Form.slug == slug)
         .options(
             selectinload(Form.questions).selectinload(Question.options),
             selectinload(Form.questions).selectinload(Question.children).selectinload(Question.options),

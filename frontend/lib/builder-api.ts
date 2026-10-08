@@ -125,6 +125,13 @@ export async function updateBuilderFormTitle(formId: string, title: string) {
   if (!response.ok) {
     throw new Error("Unable to rename form");
   }
+  const form = (await response.json()) as CreatedForm;
+  return {
+    id: String(form.id),
+    title: form.title,
+    slug: form.slug,
+    status: form.status ?? "draft"
+  };
 }
 
 export async function publishBuilderForm(formId: string) {

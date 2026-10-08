@@ -71,7 +71,7 @@ export default function FormResultsPage() {
                 </p>
               </div>
               <Link
-                href={`/to/${results.slug}`}
+                href={`/to/${params.id}/${results.slug}`}
                 target="_blank"
                 className="flex h-10 shrink-0 items-center gap-2 rounded-lg border border-app-border bg-white px-4 font-bold text-app-muted"
               >

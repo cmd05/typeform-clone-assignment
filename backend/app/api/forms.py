@@ -72,7 +72,7 @@ def list_forms(db: Session = Depends(get_db)) -> list[FormListItem]:
 
 @router.post("", response_model=FormRead, status_code=201)
 def create_form(payload: FormCreate, db: Session = Depends(get_db)) -> FormRead:
-    title = payload.title.strip() or "Untitled form"
+    title = unique_title(db, payload.title.strip() or "Untitled form")
     form = Form(title=title, slug=unique_slug(db, title), status="draft")
     db.add(form)
     db.flush()
@@ -142,10 +142,12 @@ def update_form(
 ) -> FormRead:
     form = get_form_model(db, form_id)
     if payload.title is not None:
-        title = payload.title.strip()
-        if not title:
+        requested_title = payload.title.strip()
+        if not requested_title:
             raise HTTPException(status_code=422, detail="Title cannot be empty")
+        title = unique_title(db, requested_title, exclude_form_id=form.id)
         form.title = title
+        form.slug = unique_slug(db, title, exclude_form_id=form.id)
     db.commit()
     return get_form(form.id, db)
 
@@ -171,11 +173,8 @@ def duplicate_form(form_id: int, db: Session = Depends(get_db)) -> FormRead:
     if not source:
         raise HTTPException(status_code=404, detail="Form not found")
 
-    clone = Form(
-        title=f"{source.title} copy",
-        slug=unique_slug(db, f"{source.title} copy"),
-        status="draft",
-    )
+    clone_title = unique_title(db, f"{source.title} copy")
+    clone = Form(title=clone_title, slug=unique_slug(db, clone_title), status="draft")
     db.add(clone)
     db.flush()
 
@@ -357,14 +356,38 @@ def get_form_model(db: Session, form_id: int) -> Form:
     return form
 
 
-def unique_slug(db: Session, title: str) -> str:
+def unique_title(db: Session, title: str, exclude_form_id: int | None = None) -> str:
+    base = title
+    candidate = base
+    suffix = 1
+    while title_exists(db, candidate, exclude_form_id):
+        candidate = f"{base} ({suffix})"
+        suffix += 1
+    return candidate
+
+
+def title_exists(db: Session, title: str, exclude_form_id: int | None = None) -> bool:
+    query = select(Form.id).where(Form.title == title)
+    if exclude_form_id is not None:
+        query = query.where(Form.id != exclude_form_id)
+    return db.scalar(query) is not None
+
+
+def unique_slug(db: Session, title: str, exclude_form_id: int | None = None) -> str:
     base = slugify(title)
     slug = base
-    suffix = 2
-    while db.scalar(select(Form.id).where(Form.slug == slug)):
+    suffix = 1
+    while slug_exists(db, slug, exclude_form_id):
         slug = f"{base}-{suffix}"
         suffix += 1
     return slug
+
+
+def slug_exists(db: Session, slug: str, exclude_form_id: int | None = None) -> bool:
+    query = select(Form.id).where(Form.slug == slug)
+    if exclude_form_id is not None:
+        query = query.where(Form.id != exclude_form_id)
+    return db.scalar(query) is not None
 
 
 def slugify(value: str) -> str:

@@ -33,6 +33,11 @@ def test_form_crud_publish_unpublish_duplicate_and_delete(db_session: Session) -
 
     renamed = update_form(form.id, FormUpdate(title="Customer Survey v2"), db_session)
     assert renamed.title == "Customer Survey v2"
+    assert renamed.slug == "customer-survey-v2"
+
+    second = create_form(FormCreate(title="Customer Survey v2", start_empty=True), db_session)
+    assert second.title == "Customer Survey v2 (1)"
+    assert second.slug == "customer-survey-v2-1"
 
     with pytest.raises(HTTPException) as invalid_publish:
         publish_form(form.id, db_session)
@@ -121,7 +126,7 @@ def test_results_summary_counts_choice_answers(db_session: Session, published_fo
         ],
         metadata={},
     )
-    submit_public_form("validation-form", payload, db_session)
+    submit_public_form(published_form.id, "validation-form", payload, db_session)
 
     results = get_form_results(published_form.id, db_session)
     assert results.response_count == 1

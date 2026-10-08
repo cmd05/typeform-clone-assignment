@@ -43,7 +43,8 @@ type ApiPublicForm = {
 };
 
 export default function SharedFormPage() {
-  const params = useParams<{ slug: string }>();
+  const params = useParams<{ id: string; slug: string }>();
+  const publicPath = `${params.id}/${params.slug}`;
   const [form, setForm] = useState<{
     questions: RespondentQuestion[];
     endings: RespondentEnding[];
@@ -56,7 +57,7 @@ export default function SharedFormPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`${API_BASE_URL}/public/forms/${params.slug}`, { cache: "no-store" })
+    fetch(`${API_BASE_URL}/public/forms/${publicPath}`, { cache: "no-store" })
       .then((response) => {
         if (!response.ok) throw new Error("Unable to load public form");
         return response.json() as Promise<ApiPublicForm>;
@@ -82,7 +83,7 @@ export default function SharedFormPage() {
     return () => {
       cancelled = true;
     };
-  }, [params.slug]);
+  }, [publicPath]);
 
   if (loading) {
     return (
@@ -117,7 +118,7 @@ export default function SharedFormPage() {
       }
     };
 
-    const response = await fetch(`${API_BASE_URL}/public/forms/${params.slug}/responses`, {
+    const response = await fetch(`${API_BASE_URL}/public/forms/${publicPath}/responses`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)

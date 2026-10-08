@@ -335,7 +335,7 @@ function ShareModal({
 }) {
   const publicUrl =
     form && typeof window !== "undefined"
-      ? `${window.location.origin}/to/${form.slug}`
+      ? `${window.location.origin}/to/${form.id}/${form.slug}`
       : "";
 
   async function copyLink() {

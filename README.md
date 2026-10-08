@@ -62,7 +62,7 @@ NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
 - `/forms`: list, create, retrieve, update, delete, duplicate, publish, unpublish.
 - `PUT /forms/{id}/builder`: save builder questions and endings.
 - `GET /forms/{id}/results`: response summaries and response table data.
-- `/public/forms/{slug}`: fetch and submit published forms.
+- `/public/forms/{id}/{slug}`: fetch and submit published forms.
 
 ## Database
 

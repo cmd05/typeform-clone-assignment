@@ -29,7 +29,7 @@ def test_public_form_rejects_unpublished_forms(db_session: Session, published_fo
     db_session.commit()
 
     with pytest.raises(HTTPException) as error:
-        get_public_form("validation-form", db_session)
+        get_public_form(published_form.id, "validation-form", db_session)
 
     assert error.value.status_code == 404
 
@@ -38,7 +38,12 @@ def test_public_submission_persists_valid_answers(
     db_session: Session,
     published_form: Form,
 ) -> None:
-    response = submit_public_form("validation-form", answer_payload(db_session), db_session)
+    response = submit_public_form(
+        published_form.id,
+        "validation-form",
+        answer_payload(db_session),
+        db_session,
+    )
 
     assert response.id is not None
     assert db_session.query(Response).count() == 1
@@ -66,7 +71,7 @@ def test_public_submission_validates_required_and_type_specific_answers(
     )
 
     with pytest.raises(HTTPException) as error:
-        submit_public_form("validation-form", payload, db_session)
+        submit_public_form(published_form.id, "validation-form", payload, db_session)
 
     assert error.value.status_code == 422
     details = error.value.detail
@@ -88,12 +93,12 @@ def test_public_submission_rejects_unknown_and_duplicate_answers(
     payload = answer_payload(db_session)
     payload.answers.append(PublicAnswerWrite(question_id=9999, value="surprise"))
     with pytest.raises(HTTPException) as unknown:
-        submit_public_form("validation-form", payload, db_session)
+        submit_public_form(published_form.id, "validation-form", payload, db_session)
     assert unknown.value.status_code == 422
 
     duplicate_payload = answer_payload(db_session)
     duplicate_payload.answers.append(duplicate_payload.answers[0])
     with pytest.raises(HTTPException) as duplicate:
-        submit_public_form("validation-form", duplicate_payload, db_session)
+        submit_public_form(published_form.id, "validation-form", duplicate_payload, db_session)
     assert duplicate.value.status_code == 422
     assert duplicate.value.detail == "Submission contains duplicate answers"

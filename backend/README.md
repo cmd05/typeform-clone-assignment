@@ -27,7 +27,8 @@ API runs at `http://localhost:8000`.
 - `POST /forms/{form_id}/duplicate`
 - `POST /forms/{form_id}/publish`
 - `POST /forms/{form_id}/unpublish`
-- `GET /public/forms/{slug}`
+- `GET /public/forms/{form_id}/{slug}`
+- `POST /public/forms/{form_id}/{slug}/responses`
 
 Seed data includes `Laptop Finder`, `Team Retro Check-in`, `Event Feedback`,
 and `Product Research Pulse`.
